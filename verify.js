@@ -2,16 +2,17 @@
 
 require('dotenv').config();
 
+const CONN_MAX = 5;
+
 var request = require('request'),
     async = require('async'),
     fs = require('fs'),
     path = require('path'),
     _ = require('lodash')
 
-var targetPath = path.resolve(process.env.SEL_PATH);
-var ID = parseInt(process.argv[2]);
+const targetPath = path.resolve(process.argv[2]);
+const ID = parseInt(process.argv[3]);
 
-// authorize
 function authenticate(callback) {
   request({
     url: 'https://auth.selcdn.ru',
@@ -35,48 +36,31 @@ function authenticate(callback) {
   });
 };
 
-function upload(env, data, callback) {
-  async.waterfall([
-    function(next) {
-      fs.readFile(data.file, next);
-    },
-    function(blob, next) {
-      request({
-        url: env.session.storageUrl + targetPath + '?extract-archive=tar.gz',
-        method: 'PUT',
-        headers: {
-          'X-Auth-Token': env.session.authToken,
-          'Accept': 'application/json'
-        },
-        body: blob
-      }, function(err, resp, body) {
-        console.log(resp.statusCode)
-        console.log(resp.headers)
-        console.log("BODY:", resp.body)
-        if (err) {
-          next(err);
-        } else {
-          next(null, true);
-        }
-      })
-    }],
-    callback
-  )
+function getList(env, data, callback) {
+  request({
+    url: env.session.storageUrl + '/' + targetPath +'/?limit=1&format=json',
+    method: 'GET',
+    headers: {
+      'X-Auth-Token': env.session.authToken,
+      'Accept': 'application/json'
+    }
 }
 
 authenticate(function(err, session) {
-  console.log(session);
 
   if (err) {
     process.send({ cmd: 'fail', id: ID });
   }
 
   process.on('message', function(msg) {
-    upload({ session: session }, { file:  msg.file }, function(err, data) {
+    let lines = fs.readFileSync(msg.file, 'utf8').split('\n');
+    lines.pop();
+    const sample = _.sampleSize(lines, 50);
+    verify({ session: session }, { files:  sample }, function(err, opStatus) {
       if (err) {
         process.send({ cmd: 'fail', id: ID, error: err });
       } else {
-        process.send({ cmd: 'done', file: msg.indexFile });
+        process.send({ cmd: 'done', file: msg.file, status: opStatus});
         process.send({ cmd: 'next', id: ID });
       }
     });
@@ -85,3 +69,4 @@ authenticate(function(err, session) {
   process.send({ cmd: 'init' });
   process.send({ cmd: 'next', id: ID });
 });
+

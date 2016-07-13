@@ -84,6 +84,6 @@ echo "Make ${BATCH}-sized file listings"
 find ${SRC} -name '*.txt' -print | awk -v target=${TARGET} -v batch=${BATCH} 'FNR%batch==1{if(FNR==1)c=0; close(out); out=target "/OUT"++c".txt";} {for (i=1; i<=NF; ++i) { sub(".*/", "", $i) } print > out}'
 echo "Completed"
 
-echo "Start baking archives"
-find ${TARGET} -name 'OUT*.txt' -print | xargs -I FILE -P ${JOBS} -n1 tar -czf FILE.tar.gz -C ${SRC} -T FILE
-echo "Completed"
+#echo "Start baking archives"
+#find ${TARGET} -name 'OUT*.txt' -print | xargs -I FILE -P ${JOBS} -n1 tar -czf FILE.tar.gz -C ${SRC} -T FILE
+#echo "Completed"
