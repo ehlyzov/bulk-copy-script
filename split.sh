@@ -28,7 +28,7 @@ EOF
 JOBS=1
 
 # Set archive size
-BATCH=2000
+BATCH=50000
 
 # We need this to configure xarg
 ARG_MAX=$((`getconf ARG_MAX` - 4096))

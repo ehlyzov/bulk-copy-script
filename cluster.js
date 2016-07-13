@@ -7,12 +7,23 @@ const cp = require('child_process'),
       path = require('path'),
       util = require('util')
 
+if (process.argv[2] == '--split') {
+    console.log('Generating index files...');
+    try {
+        var out = cp.execFileSync(path.resolve('./split.sh'), ["-j", 1,"-b",process.env.BATCH, process.env.SOURCE_DIR, process.env.TARGET_DIR], {
+            cwd: __dirname
+        });
+        console.log(out);
+    } catch (e) {
+        console.log("Error", e);
+    }
+} else {
+    console.log('If no files found please run this script with --split argument.');
+}
+
 const compressor = cp.fork('compressor.js');
 let uploaders = [];
-let verifiers = [];
-let uploadedFiles = [];
-let successFiles = [];
-let failedFiles = [];
+// let verifiers = [];
 
 const MAX_UPLOADERS = 2;
 const MAX_VERIFIERS = 1;
@@ -42,6 +53,7 @@ const initUploader = (id) => {
       compressor.send({ cmd: 'request', id: msg.id });
       break;
     case 'done':
+      cp.execSync(util.format("rm %s", msg.file + '.tar.gz'));
       cp.execSync(util.format("cat %s >> %s", msg.file, fileProcessed));
       break;
     case 'fail':
