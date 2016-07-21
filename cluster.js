@@ -13,7 +13,7 @@ if (process.argv[2] == '--split') {
         var out = cp.execFileSync(path.resolve('./split.sh'), ["-j", 1,"-b",process.env.BATCH, process.env.SOURCE_DIR, process.env.TARGET_DIR], {
             cwd: __dirname
         });
-        console.log(out);
+        console.log(out.toString());
     } catch (e) {
         console.log("Error", e);
     }
